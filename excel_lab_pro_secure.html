@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXCEL LAB PRO AI</title>
+
+<!-- React & Babel -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+deep: '#020205',
+'neon-cyan': '#00f3ff',
+'neon-pink': '#ff00ff',
+'neon-purple': '#bd00ff',
+'neon-green': '#0aff68',
+'neon-orange': '#ffaa00',
+},
+fontFamily: {
+sans: ['Outfit', 'sans-serif'],
+mono: ['JetBrains Mono', 'monospace'],
+},
+animation: {
+'spin-slow': 'spin 3s linear infinite',
+'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+'float': 'float 6s ease-in-out infinite',
+},
+keyframes: {
+'pulse-glow': {
+'0%, 100%': { opacity: 1, boxShadow: '0 0 20px currentColor' },
+'50%': { opacity: .5, boxShadow: '0 0 5px currentColor' },
+},
+float: {
+'0%, 100%': { transform: 'translate(0, 0)' },
+'50%': { transform: 'translate(0, -20px)' },
+}
+}
+}
+}
+}
+</script>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+--bg-deep: #020205;
+}
+
+body {
+background-color: var(--bg-deep);
+color: white;
+font-family: 'Outfit', sans-serif;
+overflow-x: hidden;
+}
+
+/* Scrollbar custom */
+::-webkit-scrollbar {
+width: 8px;
+height: 8px;
+}
+::-webkit-scrollbar-track {
+background: #0a0a0f;
+}
+::-webkit-scrollbar-thumb {
+background: #333;
+border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+background: #555;
+}
+
+.glass-panel {
+background: rgba(255, 255, 255, 0.03);
+backdrop-filter: blur(10px);
+border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.neon-text-cyan { text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+.neon-text-pink { text-shadow: 0 0 10px rgba(255, 0, 255, 0.5); }
+
+/* Markdown Styles */
+.markdown-body p { margin-bottom: 0.75em; line-height: 1.6; color: #cbd5e1; }
+.markdown-body h3 { font-size: 1.1em; font-weight: 700; color: #fff; margin-top: 1.5em; margin-bottom: 0.5em; }
+.markdown-body code { background: rgba(0,0,0,0.3); padding: 0.2em 0.4em; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: #00f3ff; }
+.markdown-body pre { background: #000; padding: 1em; border-radius: 8px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 1em; }
+.markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; color: #94a3b8; }
+.markdown-body li { margin-bottom: 0.25em; }
+.markdown-body strong { color: #fff; font-weight: 600; }
+
+@keyframes bounce-slow {
+0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+50% { transform: translateY(0); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+}
+.animate-bounce-slow {
+animation: bounce-slow 2s infinite;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// --- COMPONENTS ---
+
+// 1. LANDING COMPONENT (Avec sécurité renforcée)
+const Landing = ({ onEnter }) => {
+  const [inputKey, setInputKey] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLogin = async () => {
+    if (!inputKey.trim()) {
+      setError("Veuillez entrer une clé API Gemini.");
+      return;
+    }
+    setIsValidating(true);
+    setError('');
+
+    setTimeout(() => {
+      setIsValidating(false);
+      onEnter(inputKey);
+    }, 800);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-deep">
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-neon-cyan/20 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 animate-float pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-neon-purple/20 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2 animate-float pointer-events-none" style={{animationDelay: '2s'}} />
+      <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-neon-pink/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none" />
+
+      <div className="z-10 w-full max-w-md p-8 glass-panel rounded-2xl shadow-2xl border-t border-white/10 mx-4 backdrop-blur-xl">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-900/40 to-emerald-900/40 border border-green-500/30 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)] animate-bounce relative group">
+              <div className="absolute inset-0 bg-green-500/10 rounded-2xl blur-md group-hover:blur-lg transition-all"></div>
+              <svg className="w-10 h-10 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+              <div className="absolute -bottom-2 -right-2 bg-black/80 text-[10px] font-mono text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">XLSX</div>
+            </div>
+          </div>
+
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-green-100 to-green-200 mb-2 tracking-tight">
+            EXCEL LAB <span className="text-green-400 font-light">PRO</span>
+          </h1>
+          <p className="text-slate-400 text-sm font-light">L'intelligence artificielle au service de vos tableurs.</p>
+        </div>
+
+        <div className="space-y-5">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <input
+              type="password"
+              value={inputKey}
+              onChange={(e) => setInputKey(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              placeholder="Clé API Gemini"
+              className="relative w-full bg-[#05050a] border border-white/10 text-white placeholder-slate-600 rounded-xl px-5 py-3.5 focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/50 transition-all font-mono text-sm"
+            />
+          </div>
+
+          <button
+            onClick={handleLogin}
+            disabled={isValidating}
+            className="w-full relative group overflow-hidden bg-white text-black font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="relative flex items-center justify-center gap-3">
+              {isValidating ? (
+                <>
+                  <i className="fas fa-circle-notch fa-spin text-green-600"></i>
+                  <span>Connexion...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span className="tracking-wide">Accéder à l'interface</span>
+                </>
+              )}
+            </span>
+          </button>
+
+          <div className="text-center">
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-green-400 transition-colors border-b border-transparent hover:border-green-400/50 pb-0.5"
+            >
+              <span>Générer une clé d'accès</span>
+              <i className="fas fa-external-link-alt text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center flex items-center justify-center gap-2 animate-pulse">
+            <i className="fas fa-exclamation-circle"></i> {error}
+          </div>
+        )}
+      </div>
+
+      <div className="absolute bottom-6 text-slate-600 text-[10px] font-mono tracking-widest uppercase opacity-40">
+        System v2.4 • Secure Environment
+      </div>
+    </div>
+  );
+};
+
+// 2. Generator Component
+const Generator = ({ apiKey, version, incrementUsage }) => {
+  const [prompt, setPrompt] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+    setResult(null);
+
+    const systemPrompt = version === '2019'
+      ? "Tu es un expert Excel 2019. Génère UNIQUEMENT une formule Excel compatible 2019 (pas de LET, LAMBDA, XLOOKUP). Pas d'explication, juste la formule."
+      : "Tu es un expert Excel 365. Génère la formule la plus efficace et moderne. Pas d'explication, juste la formule.";
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${systemPrompt}\n\nDemande utilisateur: ${prompt}` }] }]
+        })
+      });
+      const data = await response.json();
+      if(data.error) throw new Error(data.error.message);
+
+      let text = data.candidates[0].content.parts[0].text.trim();
+      text = text.replace(/^```excel|```$/g, '').replace(/^```|```$/g, '').trim();
+
+      setResult(text);
+      incrementUsage();
+    } catch (err) {
+      setResult("Erreur : " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if(!result) return;
+    navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="h-full flex flex-col max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-center space-y-8">
+        <div className="space-y-2 text-center">
+          <h2 className="text-3xl font-bold text-white tracking-tight">Générateur de Formules</h2>
+          <p className="text-slate-400">Décrivez ce que vous voulez calculer en langage naturel.</p>
+        </div>
+
+        <div className="bg-[#0a0a10] border border-white/10 rounded-2xl p-2 shadow-2xl relative group focus-within:border-neon-cyan/50 transition-colors">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Ex: Somme de la colonne A si la colonne B contient 'Payé'..."
+            className="w-full bg-transparent text-white placeholder-slate-600 p-4 min-h-[120px] focus:outline-none resize-none font-mono text-sm rounded-xl"
+          />
+          <div className="flex justify-between items-center px-4 pb-2">
+            <span className="text-xs text-slate-600 font-mono">AI-POWERED</span>
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !prompt}
+              className={`px-6 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${loading ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white text-black hover:bg-neon-cyan hover:text-black shadow-[0_0_15px_-5px_white]'}`}
+            >
+              {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-magic"></i>}
+              Générer
+            </button>
+          </div>
+        </div>
+
+        {result && (
+          <div className="animate-bounce-slow">
+            <div className="glass-panel rounded-xl p-6 border-l-4 border-neon-cyan relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2">
+                <button onClick={copyToClipboard} className="text-slate-400 hover:text-white transition-colors">
+                  {copied ? <i className="fas fa-check text-green-400"></i> : <i className="far fa-copy"></i>}
+                </button>
+              </div>
+              <h3 className="text-xs font-bold text-neon-cyan uppercase tracking-wider mb-2">Résultat</h3>
+              <code className="block font-mono text-lg text-white break-all">{result}</code>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// 3. Analyzer Component
+const Analyzer = ({ apiKey, version, incrementUsage }) => {
+  const [code, setCode] = useState('');
+  const [analysis, setAnalysis] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleAnalyze = async () => {
+    if (!code.trim()) return;
+    setLoading(true);
+    setAnalysis('');
+
+    const systemPrompt = "Tu es un expert Excel. Explique cette formule en détail, repère les erreurs potentielles et suggère une optimisation si possible. Formate la réponse en Markdown.";
+
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${systemPrompt}\n\nFormule à analyser: ${code}` }] }]
+        })
+      });
+      const data = await response.json();
+      if(data.error) throw new Error(data.error.message);
+
+      setAnalysis(data.candidates[0].content.parts[0].text);
+      incrementUsage();
+    } catch (err) {
+      setAnalysis("Erreur : " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatMarkdown = (text) => {
+    if (!text) return null;
+    let html = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br/>')
+      .replace(/- (.*?)(<br\/>|$)/g, '<li>$1</li>');
+
+    return <div className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />;
+  };
+
+  return (
+    <div className="h-full flex flex-col max-w-4xl mx-auto w-full gap-6">
+      <div className="glass-panel p-1 rounded-xl flex items-center bg-black/20">
+        <i className="fas fa-search text-slate-500 ml-3"></i>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Collez votre formule Excel ici..."
+          className="w-full bg-transparent border-none text-white p-3 focus:outline-none font-mono text-sm"
+        />
+        <button
+          onClick={handleAnalyze}
+          disabled={loading || !code}
+          className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold mr-1.5 transition-colors"
+        >
+          {loading ? '...' : 'Analyser'}
+        </button>
+      </div>
+
+      <div className="flex-1 glass-panel rounded-2xl p-6 overflow-y-auto border border-white/5 relative">
+        {!analysis && !loading && (
+          <div className="absolute inset-0 flex items-center justify-center text-slate-600 flex-col gap-2 opacity-50">
+            <i className="fas fa-microscope text-4xl mb-2"></i>
+            <p>En attente d'une formule à analyser...</p>
+          </div>
+        )}
+        {loading && (
+          <div className="flex items-center justify-center h-full text-neon-purple">
+            <i className="fas fa-circle-notch fa-spin text-3xl"></i>
+          </div>
+        )}
+        {analysis && formatMarkdown(analysis)}
+      </div>
+    </div>
+  );
+};
+
+// 4. Disclaimer Component
+const Disclaimer = () => (
+  <div className="border-t border-white/5 pt-4 mt-4">
+    <p className="text-[10px] text-slate-600 text-center">
+      <i className="fas fa-shield-alt mr-1"></i>
+      L'IA peut faire des erreurs. Vérifiez toujours les formules importantes.
+      <span className="mx-2">•</span>
+      Données non stockées.
+    </p>
+  </div>
+);
+
+// --- ROOT APP avec SÉCURITÉ AUTO-CLEAR ---
+const App = () => {
+  const [apiKey, setApiKey] = useState('');
+  const [view, setView] = useState('generator');
+  const [version, setVersion] = useState('365');
+  const [usage, setUsage] = useState(0);
+
+  // ⚠️ SÉCURITÉ : Vider la clé API à l'actualisation de la page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      setApiKey('');
+      localStorage.removeItem('apiKey');
+      sessionStorage.removeItem('apiKey');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    setApiKey('');
+    setUsage(0);
+    localStorage.removeItem('apiKey');
+    sessionStorage.removeItem('apiKey');
+  };
+
+  if (!apiKey) {
+    return <Landing onEnter={setApiKey} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-deep text-white flex flex-col md:flex-row overflow-hidden font-sans">
+      <aside className="w-full md:w-20 lg:w-64 bg-[#05050a] border-r border-white/5 flex flex-col justify-between z-20">
+        <div>
+          <div className="h-20 flex items-center justify-center md:justify-start md:px-6 border-b border-white/5">
+            <div className="w-8 h-8 rounded bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mr-3 shadow-[0_0_15px_-3px_rgba(16,185,129,0.4)]">
+              <span className="font-bold text-black text-xs">XL</span>
+            </div>
+            <span className="font-bold tracking-wider hidden lg:block">LAB<span className="text-green-500">PRO</span></span>
+          </div>
+
+          <nav className="p-4 space-y-2">
+            <button
+              onClick={() => setView('generator')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'generator' ? 'bg-white/5 text-white border border-white/10 shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            >
+              <i className={`fas fa-wand-magic-sparkles ${view === 'generator' ? 'text-neon-cyan' : ''}`}></i>
+              <span className="hidden lg:block font-medium text-sm">Générateur</span>
+            </button>
+            <button
+              onClick={() => setView('analyzer')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'analyzer' ? 'bg-white/5 text-white border border-white/10 shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            >
+              <i className={`fas fa-code-branch ${view === 'analyzer' ? 'text-neon-purple' : ''}`}></i>
+              <span className="hidden lg:block font-medium text-sm">Analyseur</span>
+            </button>
+          </nav>
+        </div>
+
+        <div className="p-4 border-t border-white/5">
+          <div className="bg-white/5 rounded-xl p-4 mb-4">
+            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-2 block">Version Excel</label>
+            <div className="flex bg-black/40 rounded-lg p-1">
+              <button
+                onClick={() => setVersion('365')}
+                className={`flex-1 py-1.5 text-xs rounded-md transition-all font-medium ${version === '365' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                365
+              </button>
+              <button
+                onClick={() => setVersion('2019')}
+                className={`flex-1 py-1.5 text-xs rounded-md transition-all font-medium ${version === '2019' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                2019
+              </button>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleLogout} 
+            className="w-full text-xs text-slate-600 hover:text-red-400 transition-colors flex items-center justify-center gap-2 py-2"
+          >
+            <i className="fas fa-sign-out-alt"></i>
+            <span className="hidden lg:inline">Déconnexion</span>
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-deep/50 backdrop-blur-md z-10 sticky top-0">
+          <div>
+            <h2 className="text-xl font-bold text-white">{view === 'generator' ? 'GÉNÉRATEUR EXPERT' : 'ASSISTANT FORMULE'}</h2>
+            <p className="text-slate-400 text-sm flex items-center gap-3 font-medium">
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-[0_0_15px_-5px_currentColor] ${version === '2019' ? 'bg-neon-green/10 text-neon-green border-neon-green/30' : 'bg-neon-orange/10 text-neon-orange border-neon-orange/30'}`}>
+                {version === '2019' ? 'Legacy Core' : 'Cloud Core'}
+              </span>
+              Mode : {version === '2019' ? 'Compatibilité Classique' : 'Fonctions Dynamiques'}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <div className="text-xs text-slate-500 uppercase tracking-wider">Session Usage</div>
+              <div className="text-neon-cyan font-mono">{usage} req</div>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-neon-cyan/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-neon-purple/5 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+          <div className="relative z-10 h-full flex flex-col">
+            {view === 'generator'
+              ? <Generator apiKey={apiKey} version={version} incrementUsage={() => setUsage(u => u + 1)} />
+              : <Analyzer apiKey={apiKey} version={version} incrementUsage={() => setUsage(u => u + 1)} />
+            }
+            <Disclaimer />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
